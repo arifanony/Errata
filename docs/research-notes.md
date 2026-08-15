@@ -68,6 +68,18 @@ What I didn't find anywhere was this cost idea combined with the tree idea from 
 
 This one only occurred to me after I'd already sketched out the rest of the project, and it came from a good question about where the "belief" actually lives. The agent being tested doesn't usually just blurt out a final answer — it typically builds up a belief across the possible truths as it looks at evidence (something like "70% safe, 20% suspicious, 10% dangerous") before a decision policy turns that into one final action. My first version of this project only ever looked at that final action — right or wrong — and threw away the confidence number entirely.
 
+The agent only ever sees the evidence in front of it — the email's content, the sender, the patterns — it never gets to directly observe the actual hidden truth. It has to reason about which of the possible truths is most likely, and hold onto that uncertainty honestly, rather than collapsing to a guess too early:
+
+```mermaid
+flowchart TD
+    E[Visible Evidence] --> A[Agent]
+    A -. Cannot directly observe .-> H[Hidden True State]
+    H --> H1[Safe]
+    H --> H2[Suspicious]
+    H --> H3[Dangerous: Phishing]
+    H --> H4[Dangerous: Malware]
+    H --> H5[Dangerous: Fraud]
+
 That's a real gap, because a model can have excellent accuracy and still be dangerously overconfident — saying "95% sure" and being wrong half the time is a different, arguably worse problem than just being wrong, since nobody double-checks a confident answer. The proper name for this is calibration: grouping predictions by how confident the model claimed to be, then checking whether it was actually right that often. A well-calibrated model that says 90% sure is right about 90% of the time; a badly-calibrated one might say 90% sure and only be right half the time, which is a confidently wrong model wearing a trustworthy mask.
 
 This only works, though, if the model actually gives back a confidence number in the first place — which ties directly into the next thing I had to think through.
