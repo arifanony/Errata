@@ -79,6 +79,9 @@ flowchart TD
     H --> H3[Dangerous: Phishing]
     H --> H4[Dangerous: Malware]
     H --> H5[Dangerous: Fraud]
+```
+
+The agent must reason about the hidden state using the evidence available to it, and maintain uncertainty across the competing hypotheses — that uncertainty *is* the Belief Update step, and it's exactly what Errata's calibration check is designed to hold the agent accountable for later.
 
 That's a real gap, because a model can have excellent accuracy and still be dangerously overconfident — saying "95% sure" and being wrong half the time is a different, arguably worse problem than just being wrong, since nobody double-checks a confident answer. The proper name for this is calibration: grouping predictions by how confident the model claimed to be, then checking whether it was actually right that often. A well-calibrated model that says 90% sure is right about 90% of the time; a badly-calibrated one might say 90% sure and only be right half the time, which is a confidently wrong model wearing a trustworthy mask.
 
