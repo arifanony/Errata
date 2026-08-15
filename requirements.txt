@@ -1,0 +1,15 @@
+# Core plumbing — data handling and numerics
+pandas>=2.0
+numpy>=1.24
+
+# Reporting
+matplotlib>=3.7
+
+# Quality checks
+pytest>=7.4
+
+# LLM agent path (the "thing being tested") — via local LiteLLM/Ollama setup
+litellm>=1.40
+
+# Optional: classic-ML path (stretch goal, uncomment when needed)
+# scikit-learn>=1.3
