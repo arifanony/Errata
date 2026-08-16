@@ -46,6 +46,7 @@ This repo currently holds the research, design, and pseudocode produced before w
 | Tools & architecture decisions | Done — see `docs/tools-and-approach.md` |
 | Full pseudocode (9 steps) | Done — see `docs/pseudocode.md` |
 | Flow diagram | Done — see `assets/errata-flow-diagram.png` |
+| Dry run proving the scoring logic works | Done — see `docs/dry-run-walkthrough.md` |
 | Actual Python implementation | Not started |
 
 ## Repo structure
