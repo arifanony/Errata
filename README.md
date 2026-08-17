@@ -38,17 +38,16 @@ Full literature review and gap analysis: [`docs/research-notes.md`](docs/researc
 
 ## Project status
 
-This repo currently holds the research, design, and pseudocode produced before writing any real code. The `src/errata/` folder is the intended home for the actual implementation as it gets built.
+This repo currently holds the research, design, pseudocode, and a proven dry run produced before writing the full application. The `src/errata/` folder is the intended home for the actual implementation as it gets built.
 
 | Piece | Status |
 |---|---|
-| Problem research & prior-art check | Done — see `docs/research-notes.md` |
-| Tools & architecture decisions | Done — see `docs/tools-and-approach.md` |
-| Full pseudocode (9 steps) | Done — see `docs/pseudocode.md` |
-| Flow diagram | Done — see `assets/errata-flow-diagram.png` |
-| Social Media Discussion | Ongoing — `https://www.reddit.com/r/learnmachinelearning/s/3QpeJ4lR3p'|
-|                            |             `https://www.reddit.com/r/AI_Agents/s/d5597YtN3n'|
-| Dry run proving the scoring logic works | Done — see `docs/dry-run-walkthrough.md` |
+| Problem research & prior-art check | Done — see [`docs/research-notes.md`](docs/research-notes.md) |
+| Tools & architecture decisions | Done — see [`docs/tools-and-approach.md`](docs/tools-and-approach.md) |
+| Full pseudocode (9 steps) | Done — see [`docs/pseudocode.md`](docs/pseudocode.md) |
+| Flow diagram | Done — see [`assets/errata-flow-diagram.png`](assets/errata-flow-diagram.png) |
+| Dry run proving the scoring logic works | Done — see [`docs/dry-run-walkthrough.md`](docs/dry-run-walkthrough.md) |
+| Community validation | Ongoing — discussed on [r/learnmachinelearning](https://www.reddit.com/r/learnmachinelearning/s/3QpeJ4lR3p) and [r/AI_Agents](https://www.reddit.com/r/AI_Agents/s/d5597YtN3n) |
 | Actual Python implementation | Not started |
 
 ## Repo structure
@@ -60,16 +59,28 @@ errata/
 ├── requirements.txt
 ├── .gitignore
 ├── .env.example
+├── dry_run_demo.py                ← proves the scoring logic works, no real model needed
 ├── docs/
 │   ├── research-notes.md         ← the "why" behind this project
 │   ├── tools-and-approach.md     ← tools, decisions, and reasoning
-│   └── pseudocode.md             ← step-by-step logic, all 9 steps
+│   ├── pseudocode.md             ← step-by-step logic, all 9 steps
+│   └── dry-run-walkthrough.md    ← one case traced by hand + full batch output
 ├── assets/
 │   └── errata-flow-diagram.png
 ├── src/
 │   └── errata/                   ← the actual implementation goes here
 └── tests/                        ← tests for the scoring logic
 ```
+
+## Try the dry run
+
+No real model or setup needed — this proves the scoring logic itself works, using hand-mocked predictions:
+
+```bash
+python dry_run_demo.py
+```
+
+See [`docs/dry-run-walkthrough.md`](docs/dry-run-walkthrough.md) for the full trace and what the output actually proves.
 
 ## Getting started (once code lands)
 
