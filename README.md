@@ -46,6 +46,8 @@ This repo currently holds the research, design, and pseudocode produced before w
 | Tools & architecture decisions | Done — see `docs/tools-and-approach.md` |
 | Full pseudocode (9 steps) | Done — see `docs/pseudocode.md` |
 | Flow diagram | Done — see `assets/errata-flow-diagram.png` |
+| Social Media Discussion | Ongoing — `https://www.reddit.com/r/learnmachinelearning/s/3QpeJ4lR3p'
+                                        `https://www.reddit.com/r/AI_Agents/s/d5597YtN3n'
 | Dry run proving the scoring logic works | Done — see `docs/dry-run-walkthrough.md` |
 | Actual Python implementation | Not started |
 
