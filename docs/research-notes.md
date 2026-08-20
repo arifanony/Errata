@@ -4,7 +4,9 @@
 
 *The corrected record your model's accuracy score doesn't show you — what I looked into before deciding to build this, written the way I'd explain it out loud.*
 
-Arif Hussain · 11 August 2026
+Arif Hussain
+**Created:** 11 August 2026
+**Last updated:** 21 August 2026 — see the note at the very end of this document; two claims below were checked again and corrected, and two new citations were added after finding more current information.
 
 ---
 
@@ -56,32 +58,19 @@ A standard confusion matrix can't tell any of these mistakes apart in degree —
 
 Turns out, yes — Apple's own machine learning research team published a paper on exactly this in 2022 (it won a best paper award at CHI, a major human-computer-interaction conference). They noticed their own engineers struggling with this same blind spot and built an internal tool called Neo to fix it. A few academic papers since then have formalised the same idea mathematically — basically, walk up the category tree from the guess and from the real answer until you hit a point where they meet, and however many steps that took is how "big" the mistake was.
 
-The catch: none of this research comes with anything you can actually install and use. Apple never released Neo as public code. The academic papers describe the math but don't ship a ready-to-use tool either — one of them even says a code release is "planned," which tells me this genuinely isn't a solved, packaged problem yet, even though the idea itself is sound and already proven out by serious people. So this became the one piece I'd actually have to build myself from the description of the idea, rather than being able to import it.
+> **Correction, added 21 August 2026:** when I first researched this, I wrote that no public code for Neo existed at all. That was wrong, and I want to correct it rather than quietly fix it. Apple *did* release Neo's code publicly — it's on GitHub as `apple/ml-hierarchical-confusion-matrix`, has over 300 stars, is still being maintained, and even has a live interactive demo. What's still true, and what actually matters for this project: **Neo is a JavaScript/TypeScript visualization library** — you feed it pre-counted confusion data and it draws the hierarchical matrix in a browser. It is not a Python function you can import to *compute* tree-distance-aware scores inside a scoring pipeline. So the corrected, honest claim is: the visualization exists and is public; a small, dependency-free Python implementation of the underlying tree-distance *scoring logic* — which is the actual piece Errata needs — still doesn't exist anywhere I could find. That's a narrower gap than I originally claimed, and it's the accurate one.
 
 ### The cost part — well understood, but almost nobody combines it with the tree idea above
 
 Separately, there's a whole area of machine learning called cost-sensitive learning, and its core idea is simple: not all mistakes cost the same, so stop treating them as if they do. A missed fraud case and an annoying false alarm are not the same size of problem, and if you build that difference into how you score a model, you get a much more honest picture of whether it's actually worth using. This is old, well-established, and there's good practical writing on it — and a recent comparison study that tested different fixes for this across thousands of experiments found that simply adjusting the decision threshold (how confident the model needs to be before it commits to "dangerous") works better than most people expect.
+
+> **Addition, 21 August 2026:** this idea is now built directly into scikit-learn itself — a class called `TunedThresholdClassifierCV` (added in version 1.5) takes a trained classifier and a cost matrix and automatically finds the threshold that minimises real business cost, rather than defaulting to the usual 0.5 cut-off. Its own documentation uses almost the identical framing this project is built on: a misclassification cost matrix, and a threshold chosen to minimise total cost rather than to maximise accuracy. I'm glad to find this — it means the manual threshold-derivation approach used in this project's own decision policy (see `decisions/probability-decision-record.md`) is aligned with an official, current, mainstream tool, not just a course exercise. It also reinforced something worth naming: a July 2026 practical guide on class imbalance stated plainly that "SMOTE often fails on the messy, high-dimensional data that production systems actually see," and recommended threshold tuning as a more modern, reliable fix — which matches the direction this project was already headed in before I found either source.
 
 What I didn't find anywhere was this cost idea combined with the tree idea from above. People who think about cost usually assume a flat yes/no. People who think about hierarchy usually just use the tree distance itself as a stand-in for cost, rather than letting you plug in a real number. Putting both of these together — a cost that can depend on both how severe the mistake was and how far off the guess was — is the part of this project that isn't really "out there" as one thing yet.
 
 ### The part I almost missed — whether the model's confidence can actually be trusted
 
 This one only occurred to me after I'd already sketched out the rest of the project, and it came from a good question about where the "belief" actually lives. The agent being tested doesn't usually just blurt out a final answer — it typically builds up a belief across the possible truths as it looks at evidence (something like "70% safe, 20% suspicious, 10% dangerous") before a decision policy turns that into one final action. My first version of this project only ever looked at that final action — right or wrong — and threw away the confidence number entirely.
-
-The agent only ever sees the evidence in front of it — the email's content, the sender, the patterns — it never gets to directly observe the actual hidden truth. It has to reason about which of the possible truths is most likely, and hold onto that uncertainty honestly, rather than collapsing to a guess too early:
-
-```mermaid
-flowchart TD
-    E[Visible Evidence] --> A[Agent]
-    A -. Cannot directly observe .-> H[Hidden True State]
-    H --> H1[Safe]
-    H --> H2[Suspicious]
-    H --> H3[Dangerous: Phishing]
-    H --> H4[Dangerous: Malware]
-    H --> H5[Dangerous: Fraud]
-```
-
-The agent must reason about the hidden state using the evidence available to it, and maintain uncertainty across the competing hypotheses — that uncertainty *is* the Belief Update step, and it's exactly what Errata's calibration check is designed to hold the agent accountable for later.
 
 That's a real gap, because a model can have excellent accuracy and still be dangerously overconfident — saying "95% sure" and being wrong half the time is a different, arguably worse problem than just being wrong, since nobody double-checks a confident answer. The proper name for this is calibration: grouping predictions by how confident the model claimed to be, then checking whether it was actually right that often. A well-calibrated model that says 90% sure is right about 90% of the time; a badly-calibrated one might say 90% sure and only be right half the time, which is a confidently wrong model wearing a trustworthy mask.
 
@@ -97,13 +86,19 @@ Rather than rebuild the whole harness differently for each of those, the fix is 
 
 I also looked for anyone doing something similar specifically for LLM-based agents, since that's the direction a lot of real systems are heading now. I found one recent, small, genuinely well-done project called AgentSentinel — it wraps any agent and checks it for whether it stays truthful, whether it can be tricked by a poisoned prompt, and whether a new version accidentally breaks something that used to work. It's a good project and honestly close in spirit to what I want to build. But its scoring is still flat — pass or fail — with no idea of "how costly," "how structurally wrong," or "how well-calibrated" a failure was. That gap is exactly where mine would sit differently.
 
+> **Addition, 21 August 2026:** worth naming a bigger, more established competitor I hadn't looked closely at before — DeepEval, a mainstream LLM evaluation framework reporting over 100 million daily evaluations, 150,000+ developers, and adoption by more than half of the Fortune 500. It's a serious, well-resourced tool with 50+ research-backed metrics (hallucination, faithfulness, task completeness, and more), pytest-native so it slots into CI/CD directly. It's a stronger, more current point of comparison than AgentSentinel alone. Even so, the same gap holds: DeepEval's metrics are still individual scores per criterion (faithfulness 0.64, answer relevancy 0.92, and so on) — it does not appear to combine hierarchical severity, an explicit rupee-denominated cost matrix, and calibration into one unified report the way this project intends to. Also worth a note on naming: "AgentSentinel" turns out to be a genuinely overloaded name — beyond the evaluation harness referenced above, there's an unrelated commercial product at agentsentinel.dev doing runtime budget/policy enforcement for agents, and a separate academic paper using the same name for a computer-use-agent security framework. None of these change this project's positioning, but it's worth being precise in the final paper about which one is being referenced.
+
 On the "can it be tricked" side specifically, there's a well-known, actively maintained list called the OWASP Top 10 for LLM Applications, and the number-one risk on that list, three years running now, is prompt injection — basically, hiding an instruction inside content the model reads, so it does something it shouldn't. That gave me a proper, credible source to build a small set of "try to fool it" test cases from, instead of just making them up myself.
+
+> **Addition, 21 August 2026:** re-checked this against the current 2026 edition of the OWASP list, published 4 August 2026. Prompt injection is confirmed still #1, now for a third consecutive year, and the ranking is no longer opinion alone — it's blended from a practitioner survey (75% weight) and analysis of 7,714 real, documented AI-security incidents (25% weight). Worth adding to the paper: **Excessive Agency jumped from #6 to #3** this year, the single biggest move in the list, specifically because agents are now trusted with real tools and real consequences. That's directly relevant here — the agent this project evaluates has real agency (it can decide to pay real money), which makes evaluating its decision quality, not just its text output, a genuinely current and rising concern, not a niche one.
 
 ### A quick reality check on "fraud detection dashboard" as the demo
 
 My first instinct for the example to demo this on was fraud detection — it's the classic case people reach for. So I went and looked at what already exists in that exact space, and it's genuinely crowded. I found several near-identical portfolio projects: same public credit-card dataset, RandomForest or XGBoost, a Streamlit dashboard, accuracy/precision/recall at the end. Nothing wrong with any of them individually, but if I built one more, it would blend straight into that pile and prove nothing new about me.
 
 That's when I decided the demo classifier should be something with a natural hierarchy of its own — which is why I landed on a small security/content-moderation style example (safe / suspicious / dangerous: phishing, malware, fraud) instead of fraud. It's not a saturated space the same way, it lines up naturally with the tree-distance idea, and it connects cleanly with the prompt-injection testing piece too.
+
+*(Note: the actual demo built for the Week 1/2 AI-Native course deliverable ended up as a vendor-payment-fraud triage agent instead of the phishing/malware/fraud tree described above — see `decisions/probability-decision-record.md`. The underlying Errata architecture is identical either way; only the labels on the hidden-state tree changed.)*
 
 ### What I'm keeping out of this, on purpose
 
@@ -116,8 +111,8 @@ Stripping all of the above down to a plain checklist — what's genuinely mine t
 | Piece | Already Exists — I'll Reuse It | Doesn't Really Exist Yet — I Build It |
 |---|---|---|
 | Basic right/wrong scoring | Yes — confusion matrix logic from standard libraries | — |
-| "How wrong" scoring for a tree of categories | Idea is published (Apple's Neo, academic papers) | Yes — no usable code exists, so I write the tree-walking function myself |
-| Turning mistakes into a real cost | The theory and general approach is well documented | Yes — combining it with tree-distance hasn't been done together anywhere I found |
+| "How wrong" scoring for a tree of categories | Idea is published (Apple's Neo); Neo's *visualization* is now public code, but no Python scoring implementation exists | Yes — I write the tree-walking scoring function myself |
+| Turning mistakes into a real cost | The theory is well documented; scikit-learn now ships automatic threshold-tuning from a cost matrix | Yes — combining it with tree-distance hasn't been done together anywhere I found |
 | Checking whether the model's confidence can be trusted | Calibration as a concept is well known in ML evaluation | Yes — combining it with the same cost-and-hierarchy report as everything else is the new part |
 | Testing whether the model can be fooled | OWASP's list gives me credible attack patterns to draw from | Yes — wiring those into the same hidden-answer test loop as everything else |
 | Showing how the score changes as the rare case gets rarer or more common | The underlying concept (base rate) is well known | Yes — a live, adjustable version tied to a real model doesn't seem to exist anywhere I found |
@@ -150,7 +145,7 @@ Next concrete thing: design the small category tree (safe / suspicious / dangero
 
 ## Sources I Actually Leaned On
 
-Not a formal bibliography — just the specific things I read that shaped the decisions above, in case I want to go back to any of them.
+Not a formal bibliography — just the specific things I read that shaped the decisions above, in case I want to go back to any of them. Sources added during the 21 August 2026 review are marked.
 
 - [Accuracy paradox](https://en.wikipedia.org/wiki/Accuracy_paradox) — the Wikipedia page has a genuinely good worked example with the numbers laid out.
 - [Base rate fallacy](https://en.wikipedia.org/wiki/Base_rate_fallacy) — the general statistics idea behind why this trick works on people, not just on models.
@@ -158,9 +153,19 @@ Not a formal bibliography — just the specific things I read that shaped the de
 - [A clear, practical walkthrough of cost-sensitive learning for imbalanced classification](https://machinelearningmastery.com/cost-sensitive-learning-for-imbalanced-classification/).
 - [A 2024 paper comparing fixes for imbalanced data](https://arxiv.org/html/2409.19751v1) across thousands of experiments — found threshold-tuning held up best.
 - [Apple's Neo paper](https://machinelearning.apple.com/research/generalizing-confusion-matrix) — the CHI 2022 best-paper-award research on hierarchical confusion matrices.
+- **[Apple's Neo source code](https://github.com/apple/ml-hierarchical-confusion-matrix)** *(added 21 Aug 2026)* — the actual public GitHub repo; confirms the visualization is open-source, while the Python scoring gap remains.
 - [A 2024 AISTATS paper formalising tree-distance scoring](https://proceedings.mlr.press/v238/cao24a.html) for hierarchical classification.
 - [A paper arguing pass/fail scoring is misleading](https://arxiv.org/pdf/2508.04489), proposing tree-based partial credit; notes a code release is planned but not yet out.
 - [AgentSentinel](https://github.com/Shree-2004/Agentsentinel) — the closest existing project I found to this idea, for LLM agents specifically.
+- **[DeepEval](https://deepeval.com/)** *(added 21 Aug 2026)* — a much larger, mainstream LLM evaluation framework; strong comparison point, still doesn't combine hierarchy + cost + calibration into one report.
 - [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/assets/PDF/OWASP-Top-10-for-LLMs-v2025.pdf) — where prompt injection sits as the #1 risk, with real examples.
+- **[scikit-learn `TunedThresholdClassifierCV` documentation](https://scikit-learn.org/stable/auto_examples/model_selection/plot_cost_sensitive_learning.html)** *(added 21 Aug 2026)* — official, current confirmation that cost-matrix-driven threshold tuning is a real, adopted scikit-learn feature.
+- **[Class imbalance guide, July 2026](https://www.analyticsvidhya.com/blog/2026/07/class-imbalance-ml/)** *(added 21 Aug 2026)* — practical confirmation that threshold tuning is now considered more reliable than SMOTE for production-grade imbalanced data.
 - [A few near-identical fraud-detection portfolio projects](https://github.com/ominirao/Fraud-Detection-Dashboard) I checked, confirming that space is crowded.
-- [TrustLens on PyPI](https://pypi.org/project/trustlens/) — checked while naming this project; an existing, active package doing very similar accuracy-beyond-accuracy auditing, which is why that name was ruled out.
+- [TrustLens on PyPI](https://pypi.org/project/trustlens/) — checked while naming this project; an existing, active package doing very similar accuracy-beyond-accuracy auditing, which is why that name was ruled out. *(Re-checked 21 Aug 2026: this name is now used by at least three separate active projects, confirming the original naming decision was correct.)*
+
+---
+
+## Update Note — 21 August 2026
+
+This document was first written on **11 August 2026**. On **21 August 2026**, I went back and independently re-checked the market/research claims made in this file — partly prompted by realising that some of these claims (especially "Apple's Neo has no public code") were stated with more confidence than I'd actually verified at the time. One claim was found to be **incorrect** and has been corrected above rather than silently edited: Apple's Neo visualization code is genuinely public on GitHub. Two claims were **confirmed still accurate**, and I added supporting detail that's stronger and more current than what I originally had (OWASP's 2026 ranking, scikit-learn's threshold-tuning class). One gap was found in the original research: DeepEval, a much larger and more current competitor, was missing entirely and has now been added. Nothing else in this document needed changes.
