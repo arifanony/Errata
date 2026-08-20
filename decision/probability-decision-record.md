@@ -14,7 +14,8 @@
 | 6 | Information gain — comparing evidence sources | 19 August 2026 |
 | 7 | Cost-based decision policy and thresholds (incl. 20 Aug threshold refinement) | 20 August 2026 |
 | 8 | Policy evaluation, simulation design, and failure analysis | 20 August 2026 |
-| — | Independent full recomputation / correction pass | 22 August 2026 |
+| — | Recheck of §7.4 refinement and §11 (Stage 8) additions | 21 August 2026 |
+| — | Independent full recomputation / correction pass (original Stages 1–7 content) | 22 August 2026 |
 
 ---
 
@@ -354,6 +355,14 @@ Stage dates were added throughout this document (Stages 1–4: 17 Aug; Stage 5: 
 
 ---
 
+## Verification Note — 21 August 2026
+
+The §7.4 threshold refinement and the new §11 (Stage 8) content, both added on 20 August 2026, were independently rechecked on 21 August 2026: the weighted verification miss rate $$r = 0.4(0.05)+0.4(0.00)+0.133(0.00)+0.067(0.50) = 0.0533$$ and the refined threshold $$p_{low}=300/(800{,}000 \times (1-0.0533))=0.000396\approx0.040\%$$ in §7.4 were recomputed from scratch and confirmed correct.
+
+A dating error introduced during the 20 Aug edit was also found and fixed here: a sentence had been incorrectly appended to the (separately dated, see below) full-document recomputation note, describing the 20 Aug additions as "checked as part of" a later pass — worded in a way that read as referencing a future date from the point the sentence was written. That sentence has been removed from the note below, and its content is recorded here instead, dated to when this recheck actually happened (21 Aug), so no note in this document describes a verification pass that has not yet occurred.
+
+---
+
 ## Verification Note — 22 August 2026
 
 This document was first prepared on 20 August 2026. On 22 August 2026, every calculation in this file was independently recomputed from first principles (not just re-read) to check the reasoning was sound. Two genuine numeric errors were found and are corrected in place above, not silently edited:
@@ -362,5 +371,3 @@ This document was first prepared on 20 August 2026. On 22 August 2026, every cal
 2. **The combined posterior fraud probability was mis-added** (stated as 65.5%; the correct sum of the four non-Genuine posteriors is 75.5%).
 
 Neither error changes the final decision reached in Section 9 (Verify), but both were real errors in the stated numbers and needed correcting rather than left as-is. One documentation gap was also fixed: Evidence 2's likelihood table was missing its "Something else" row, now added. Everything else in this document — the Bayes update in Section 4, the entropy values in Section 5, the threshold derivation in Section 7, and the umbrella problem in Section 8 — was independently reconfirmed as correct.
-
-The 20 Aug additions (see Update Note above) were also checked as part of this pass: the weighted verification miss rate $$r = 0.4(0.05)+0.4(0.00)+0.133(0.00)+0.067(0.50) = 0.0533$$ and the refined threshold $$p_{low}=300/(800{,}000 \times 0.9467)=0.000396\approx0.040\%$$ in §7.4 were independently recomputed and confirmed correct.
