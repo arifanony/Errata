@@ -1,0 +1,321 @@
+Core data loaded.
+Priors sum to: 1.0000
+P_LOW  (pre-verify,  §7.4, 3-action) = 0.0396%
+P_HIGH (pre-verify,  §7.3, 3-action) = 90.0%
+P_STAR (post-verify, §7.2, 2-action) = 0.2494%
+
+Core mechanics defined (all functions take an explicit rng argument).
+
+Sanity check against §4's worked example (E1 = new account observed):
+  State             Doc posterior   Script posterior
+  Genuine                   0.245              0.245
+  Compromised               0.311              0.311
+  Impersonation             0.311              0.311
+  Insider                   0.104              0.104
+  Something else            0.029              0.029
+  Denominator (§4 says 0.1735): script computed 0.1735
+
+Running 3 fully verbose example cases (own isolated rng, seed=1):
+
+==============================================================================
+CASE #1
+==============================================================================
+[Step 1] TRUE hidden state drawn (hidden from agent): Genuine
+[Step 2] Evidence 1 (new account?) generated: 0 (known account)
+[Step 3] Posterior after E1: Genuine=0.977, Compromised=0.007, Impersonation=0.007, Insider=0.002, Something else=0.006  (denominator=0.8265)
+[Step 3] Evidence 2 (domain mismatch?) generated: 0 (exact match)
+         Posterior after E1+E2: Genuine=0.988, Compromised=0.007, Impersonation=0.001, Insider=0.001, Something else=0.003  (denominator=0.9892)
+         Combined fraud probability = 1.235%
+[Step 4] 1.235% between thresholds -> VERIFY (incur Rs 300)
+         Evidence 3 generated: 1 (CONFIRMS genuine)
+         Final fraud probability = 0.213%
+[Step 4] Post-verification: 0.213% < P_STAR (0.25%) -> PAY
+[Step 5] TRUE state = Genuine | Action = Pay | Outcome = TN | Cost = Rs 300
+
+==============================================================================
+CASE #2
+==============================================================================
+[Step 1] TRUE hidden state drawn (hidden from agent): Genuine
+[Step 2] Evidence 1 (new account?) generated: 0 (known account)
+[Step 3] Posterior after E1: Genuine=0.977, Compromised=0.007, Impersonation=0.007, Insider=0.002, Something else=0.006  (denominator=0.8265)
+[Step 3] Evidence 2 (domain mismatch?) generated: 0 (exact match)
+         Posterior after E1+E2: Genuine=0.988, Compromised=0.007, Impersonation=0.001, Insider=0.001, Something else=0.003  (denominator=0.9892)
+         Combined fraud probability = 1.235%
+[Step 4] 1.235% between thresholds -> VERIFY (incur Rs 300)
+         Evidence 3 generated: 1 (CONFIRMS genuine)
+         Final fraud probability = 0.213%
+[Step 4] Post-verification: 0.213% < P_STAR (0.25%) -> PAY
+[Step 5] TRUE state = Genuine | Action = Pay | Outcome = TN | Cost = Rs 300
+
+==============================================================================
+CASE #3
+==============================================================================
+[Step 1] TRUE hidden state drawn (hidden from agent): Genuine
+[Step 2] Evidence 1 (new account?) generated: 1 (NEW account)
+[Step 3] Posterior after E1: Genuine=0.245, Compromised=0.311, Impersonation=0.311, Insider=0.104, Something else=0.029  (denominator=0.1735)
+[Step 3] Evidence 2 (domain mismatch?) generated: 0 (exact match)
+         Posterior after E1+E2: Genuine=0.375, Compromised=0.476, Impersonation=0.048, Insider=0.079, Something else=0.022  (denominator=0.6536)
+         Combined fraud probability = 62.522%
+[Step 4] 62.522% between thresholds -> VERIFY (incur Rs 300)
+         Evidence 3 generated: 1 (CONFIRMS genuine)
+         Final fraud probability = 9.360%
+[Step 4] Post-verification: 9.360% >= P_STAR (0.25%) -> ESCALATE
+[Step 5] TRUE state = Genuine | Action = Escalate | Outcome = FP | Cost = Rs 2,300
+
+==============================================================================
+STAGE 8 — MAIN SIMULATION: n = 1,000, seed=42, document's own numbers
+==============================================================================
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Baseline (n=1000, seed=42)
+------------------------------------------------------------------------------
+True state distribution: Genuine=851, Compromised=62, Impersonation=59, Insider=18, Something else=10
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 851
+Of 851 Genuine cases, E1 fired 'new account' by chance: 47  (expected ≈ 42.6)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=148             FN=1
+  Actually Genuine  FP=124             TN=727
+
+Recall    = 148/149 = 99.33%
+Precision = 148/272 = 54.41%
+Accuracy (misleading, §11.1) = 87.50%
+Verification used in 935/1000 cases (93.5%)
+TOTAL EXPECTED COST = Rs 1,328,500
+Average cost/case   = Rs 1,328.50
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Same seed, AFTER 500 unrelated global random.random() calls (n=1000, seed=42)
+------------------------------------------------------------------------------
+True state distribution: Genuine=851, Compromised=62, Impersonation=59, Insider=18, Something else=10
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 851
+Of 851 Genuine cases, E1 fired 'new account' by chance: 47  (expected ≈ 42.6)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=148             FN=1
+  Actually Genuine  FP=124             TN=727
+
+Recall    = 148/149 = 99.33%
+Precision = 148/272 = 54.41%
+Accuracy (misleading, §11.1) = 87.50%
+Verification used in 935/1000 cases (93.5%)
+TOTAL EXPECTED COST = Rs 1,328,500
+Average cost/case   = Rs 1,328.50
+
+*** RELIABILITY CHECK: identical results despite unrelated noise? YES -- fix confirmed working ***
+
+==============================================================================
+STAGE 8 — STRESS-TEST SCENARIOS (§11.4)
+==============================================================================
+
+### Scenario 1: Base-rate sensitivity ###
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 1 — rare fraud, 2% (r=5.33%, p_low=0.0396%) (n=1000, seed=101)
+------------------------------------------------------------------------------
+True state distribution: Genuine=986, Compromised=6, Impersonation=5, Insider=3, Something else=0
+Expected Genuine count (prior×n = 0.98×1000): 980  |  Actual: 986
+Of 986 Genuine cases, E1 fired 'new account' by chance: 52  (expected ≈ 49.3)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=14              FN=0
+  Actually Genuine  FP=142             TN=844
+
+Recall    = 14/14 = 100.00%
+Precision = 14/156 = 8.97%
+Accuracy (misleading, §11.1) = 85.80%
+Verification used in 994/1000 cases (99.4%)
+TOTAL EXPECTED COST = Rs 582,200
+Average cost/case   = Rs 582.20
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 1 — baseline, 15% (r=5.33%, p_low=0.0396%) (n=1000, seed=102)
+------------------------------------------------------------------------------
+True state distribution: Genuine=843, Compromised=71, Impersonation=46, Insider=30, Something else=10
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 843
+Of 843 Genuine cases, E1 fired 'new account' by chance: 40  (expected ≈ 42.2)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=154             FN=3
+  Actually Genuine  FP=109             TN=734
+
+Recall    = 154/157 = 98.09%
+Precision = 154/263 = 58.56%
+Accuracy (misleading, §11.1) = 88.80%
+Verification used in 937/1000 cases (93.7%)
+TOTAL EXPECTED COST = Rs 2,899,100
+Average cost/case   = Rs 2,899.10
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 1 — high fraud, 40% (r=5.33%, p_low=0.0396%) (n=1000, seed=103)
+------------------------------------------------------------------------------
+True state distribution: Genuine=580, Compromised=169, Impersonation=175, Insider=48, Something else=28
+Expected Genuine count (prior×n = 0.6×1000): 600  |  Actual: 580
+Of 580 Genuine cases, E1 fired 'new account' by chance: 22  (expected ≈ 29.0)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=420             FN=0
+  Actually Genuine  FP=580             TN=0
+
+Recall    = 420/420 = 100.00%
+Precision = 420/1000 = 42.00%
+Accuracy (misleading, §11.1) = 42.00%
+Verification used in 813/1000 cases (81.3%)
+TOTAL EXPECTED COST = Rs 1,403,900
+Average cost/case   = Rs 1,403.90
+
+### Scenario 2: Cost-structure sensitivity ###
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 2 — baseline: L=Rs 8,00,000, C_V=Rs 300 (p_low=0.0396%, p_star=0.2494%) (n=1000, seed=201)
+------------------------------------------------------------------------------
+True state distribution: Genuine=843, Compromised=67, Impersonation=59, Insider=20, Something else=11
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 843
+Of 843 Genuine cases, E1 fired 'new account' by chance: 34  (expected ≈ 42.2)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=156             FN=1
+  Actually Genuine  FP=111             TN=732
+
+Recall    = 156/157 = 99.36%
+Precision = 156/267 = 58.43%
+Accuracy (misleading, §11.1) = 88.80%
+Verification used in 934/1000 cases (93.4%)
+TOTAL EXPECTED COST = Rs 1,302,200
+Average cost/case   = Rs 1,302.20
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 2 — smaller payment: L=Rs 80,000 (p_low=0.3961%, p_star=2.4390%) (n=1000, seed=202)
+------------------------------------------------------------------------------
+True state distribution: Genuine=856, Compromised=52, Impersonation=65, Insider=20, Something else=7
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 856
+Of 856 Genuine cases, E1 fired 'new account' by chance: 51  (expected ≈ 42.8)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=142             FN=2
+  Actually Genuine  FP=132             TN=724
+
+Recall    = 142/144 = 98.61%
+Precision = 142/274 = 51.82%
+Accuracy (misleading, §11.1) = 86.60%
+Verification used in 924/1000 cases (92.4%)
+TOTAL EXPECTED COST = Rs 701,200
+Average cost/case   = Rs 701.20
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 2 — expensive verification: C_V=Rs 1,500 (p_low=0.1981%, p_star=0.2494%) (n=1000, seed=203)
+------------------------------------------------------------------------------
+True state distribution: Genuine=850, Compromised=64, Impersonation=58, Insider=18, Something else=10
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 850
+Of 850 Genuine cases, E1 fired 'new account' by chance: 50  (expected ≈ 42.5)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=148             FN=2
+  Actually Genuine  FP=120             TN=730
+
+Recall    = 148/150 = 98.67%
+Precision = 148/268 = 55.22%
+Accuracy (misleading, §11.1) = 87.80%
+Verification used in 939/1000 cases (93.9%)
+TOTAL EXPECTED COST = Rs 3,248,500
+Average cost/case   = Rs 3,248.50
+
+### Scenario 3: Verification-effectiveness sensitivity ###
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 3 — baseline: 5% miss under Compromised (r=5.33%, p_low=0.0396%) (n=1000, seed=301)
+------------------------------------------------------------------------------
+True state distribution: Genuine=865, Compromised=55, Impersonation=52, Insider=19, Something else=9
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 865
+Of 865 Genuine cases, E1 fired 'new account' by chance: 42  (expected ≈ 43.2)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=135             FN=0
+  Actually Genuine  FP=135             TN=730
+
+Recall    = 135/135 = 100.00%
+Precision = 135/270 = 50.00%
+Accuracy (misleading, §11.1) = 86.50%
+Verification used in 938/1000 cases (93.8%)
+TOTAL EXPECTED COST = Rs 551,400
+Average cost/case   = Rs 551.40
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 3 — unreliable: 20% miss (r=11.33%, p_low=0.0423%) (n=1000, seed=302)
+------------------------------------------------------------------------------
+True state distribution: Genuine=865, Compromised=47, Impersonation=51, Insider=31, Something else=6
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 865
+Of 865 Genuine cases, E1 fired 'new account' by chance: 44  (expected ≈ 43.2)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=135             FN=0
+  Actually Genuine  FP=865             TN=0
+
+Recall    = 135/135 = 100.00%
+Precision = 135/1000 = 13.50%
+Accuracy (misleading, §11.1) = 13.50%
+Verification used in 933/1000 cases (93.3%)
+TOTAL EXPECTED COST = Rs 2,009,900
+Average cost/case   = Rs 2,009.90
+
+------------------------------------------------------------------------------
+BATCH RESULTS — Scenario 3 — very reliable: 1% miss (r=3.73%, p_low=0.0390%) (n=1000, seed=303)
+------------------------------------------------------------------------------
+True state distribution: Genuine=841, Compromised=67, Impersonation=58, Insider=24, Something else=10
+Expected Genuine count (prior×n = 0.85×1000): 850  |  Actual: 841
+Of 841 Genuine cases, E1 fired 'new account' by chance: 50  (expected ≈ 42.1)
+
+Confusion matrix (Positive = Fraud):
+                    Predicted Fraud    Predicted Genuine
+  Actually Fraud    TP=158             FN=1
+  Actually Genuine  FP=124             TN=717
+
+Recall    = 158/159 = 99.37%
+Precision = 158/282 = 56.03%
+Accuracy (misleading, §11.1) = 87.50%
+Verification used in 930/1000 cases (93.0%)
+TOTAL EXPECTED COST = Rs 1,327,000
+Average cost/case   = Rs 1,327.00
+
+*** GENUINE FINDING (independently re-verified, not a bug) ***
+At either a 40% fraud base rate (Scenario 1) OR a 20% verification
+miss rate (Scenario 3), even a GENUINE case with the BEST possible
+evidence (known account + matching domain + supplier confirms)
+computes a final fraud probability ABOVE P_STAR's fixed 0.2494%
+threshold -- because P_STAR is a fixed cost-ratio number that does
+NOT adapt to base rate or evidence quality, unlike P_LOW (which §7.4
+already adjusts via r). Independently hand-verified:
+  Scenario 1 (40% fraud): best-case genuine -> 0.7996% final fraud prob
+  Scenario 3 (20% miss):  best-case genuine -> 0.3360% final fraud prob
+  Both exceed P_STAR (0.2494%) -> both get wrongly escalated.
+
+### Scenario 4: Threshold-boundary robustness ###
+Around P_LOW (0.0396%):
+  fraud_prob=0.03860%  ->  Pay
+  fraud_prob=0.03960%  ->  Verify
+  fraud_prob=0.04060%  ->  Verify
+Around P_HIGH (90.0%):
+  fraud_prob=89.900%  ->  Verify
+  fraud_prob=90.000%  ->  Escalate
+  fraud_prob=90.100%  ->  Escalate
+Result: clean transitions at both boundaries, no discontinuity bugs.
+
+### Scenario 5: Adversarial / gaming behavior ###
+Attacker always defeats E1+E2:
+  Confusion matrix: TP=137 FP=118 FN=7 TN=738
+  Recall = 95.14%  (baseline recall was 99.33%)
+  Total Expected Cost = Rs 6,136,000  (baseline was Rs 1,328,500)
+
+==============================================================================
+ALL SCENARIOS COMPLETE.
+==============================================================================
