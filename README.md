@@ -12,9 +12,9 @@ Think of it less like a student taking an exam, and more like the person standin
 
 An errata is the corrected record a publisher attaches to a book after it's already printed — not a star rating, but an itemised list of exactly what's wrong and where. This project does the same thing for a model's predictions: instead of one clean verdict, it hands back the itemised correction record. See [docs/research-notes.md](docs/research-notes.md) for the full reasoning, including the honest caveat on where that metaphor doesn't perfectly apply.
 
-### How it works
+### How Errata itself works
 
-[Errata flow diagram](assets/errata-flow-diagram.png)
+![Errata flow diagram](assets/errata-flow-diagram.png)
 
 The short version:
 - Start with a test set where the right answers are already known — but keep them hidden from the model while it makes its guesses.
@@ -35,9 +35,16 @@ This repo actually holds **two different projects at two different stages**, and
 | **What it is** | The evaluation tool — plain logic, no ML, the "auditor" | A vendor-payment fraud triage agent — the first real subject Errata will eventually evaluate |
 | **Status** | Research, design, pseudocode, and a proven dry run — done. Real Python implementation — not started. | Bayesian reasoning, decision policy, and a working Stage 8 simulation — done and executed. |
 | **Where it lives** | `docs/`, `src/errata/`, `dry_run_demo.py` | `base-model/` |
+| **Its own flow diagram** | `assets/errata-flow-diagram.png` (shown above) | `base-model/assets/base-model-flow-diagram.png` (shown below) |
 | **Read this first** | [docs/research-notes.md](docs/research-notes.md) | [base-model/decision/probability-decision-record.md](base-model/decision/probability-decision-record.md) |
 
 **Why the base model exists at all:** Errata needs something real to evaluate once it's built — a model or agent with actual decisions, actual probabilities, actual mistakes to catch. Rather than wait until Errata's code is finished to pick that subject, the fraud triage agent was built and reasoned through first, so there's a concrete, already-tested agent ready and waiting the moment Errata's own scoring logic is implemented.
+
+### How the base model works (a separate diagram from Errata's own)
+
+![Base model — vendor payment fraud triage agent flow diagram](base-model/assets/base-model-flow-diagram.png)
+
+This is **not** Errata — this is the fraud-triage agent Errata will eventually evaluate. Follow the numbered steps ①→②→③→④ across the top: one "please change our bank account" email comes in, evidence is collected, a Bayesian belief update runs across five hidden causes, and a three-action decision policy (Pay / Verify / Escalate) picks exactly one action. The section below the dashed line is how that agent is tested offline — 1,000 synthetic cases with a known answer, graded, scored, and stress-tested under five what-if scenarios. Full reasoning behind every number in this diagram is in [base-model/decision/probability-decision-record.md](base-model/decision/probability-decision-record.md).
 
 ### What's actually new here (Errata itself)
 
@@ -51,18 +58,31 @@ Full literature review and gap analysis: [docs/research-notes.md](docs/research-
 
 <table>
 <tr><th>Piece</th><th>Status</th></tr>
-<tr><td>Problem research & prior-art check (Errata)</td><td>Done — see docs/research-notes.md</td></tr>
-<tr><td>Tools & architecture decisions (Errata)</td><td>Done — see docs/tools-and-approach.md</td></tr>
+<tr><td>Problem research &amp; prior-art check (Errata)</td><td>Done — see docs/research-notes.md</td></tr>
+<tr><td>Tools &amp; architecture decisions (Errata)</td><td>Done — see docs/tools-and-approach.md</td></tr>
 <tr><td>Full pseudocode, 9 steps (Errata)</td><td>Done — see docs/pseudocode.md</td></tr>
 <tr><td>Flow diagram (Errata)</td><td>Done — see assets/errata-flow-diagram.png</td></tr>
 <tr><td>Dry run proving the scoring logic works (Errata)</td><td>Done — see docs/dry-run-walkthrough.md</td></tr>
 <tr><td>Actual Python implementation (Errata)</td><td>Not started</td></tr>
 <tr><td>Base model — priors, evidence, Bayesian update</td><td>Done — see base-model/decision/probability-decision-record.md</td></tr>
-<tr><td>Base model — cost-based decision policy & thresholds</td><td>Done — see base-model/decision/probability-decision-record.md §7</td></tr>
+<tr><td>Base model — cost-based decision policy &amp; thresholds</td><td>Done — see base-model/decision/probability-decision-record.md §7</td></tr>
 <tr><td>Base model — pseudocode</td><td>Done — see base-model/pseudocode.md</td></tr>
+<tr><td>Base model — flow diagram</td><td>Done — see base-model/assets/base-model-flow-diagram.png</td></tr>
 <tr><td>Base model — Stage 8 simulation (executed, not just designed)</td><td>Done — see base-model/experiments/stage8-fraud-triage-simulation/</td></tr>
-<tr><td>Social Media Discussion</td><td>Ongoing — <code>reddit.com/r/learnmachinelearning/s/3QpeJ4lR3p</code>, <code>reddit.com/r/AI_Agents/s/d5597YtN3n</code></td></tr>
+<tr><td>IJCAI-format preprint (paper covering both Errata and the base model)</td><td>Done — see paper/preprint.pdf</td></tr>
+<tr><td>Community validation / discussion</td><td>Ongoing — see links below</td></tr>
 </table>
+
+### Community discussion
+
+Posted for genuine outside feedback on the problem framing, the Bayesian reasoning, and whether this gap in evaluation tooling is real:
+
+- <a href="https://www.reddit.com/r/AskStatistics/s/7KuOD9Al0o">r/AskStatistics — sanity-checking the entropy-increased finding</a>
+- <a href="https://www.reddit.com/r/cybersecurity/s/GA75j0Wmbq">r/cybersecurity — reality-checking the fraud / verification assumptions</a>
+- <a href="https://www.reddit.com/r/learnmachinelearning/s/vYcqlzM8H0">r/learnmachinelearning — the project write-up and what surprised me building it</a>
+- <a href="https://www.reddit.com/r/AI_Agents/s/1nZYMxcLH9">r/AI_Agents — how people actually evaluate agent decisions, not just outputs</a>
+
+Each thread and what came out of it is logged in `discussion-record.md`.
 
 ### Repo structure
 
@@ -77,6 +97,8 @@ errata/
 │
 ├── base-model/                         ← the AGENT being evaluated (not Errata itself)
 │   ├── pseudocode.md                   ← this agent's own decision-logic pseudocode
+│   ├── assets/
+│   │   └── base-model-flow-diagram.png ← THIS agent's own diagram, separate from Errata's
 │   ├── decision/
 │   │   └── probability-decision-record.md   ← priors, evidence, Bayes update, cost thresholds
 │   └── experiments/
@@ -93,7 +115,11 @@ errata/
 │   └── dry-run-walkthrough.md          ← one case traced by hand + full batch output
 │
 ├── assets/
-│   └── errata-flow-diagram.png
+│   └── errata-flow-diagram.png         ← ERRATA'S OWN diagram, separate from the base model's
+│
+├── paper/
+│   ├── main.tex                        ← IJCAI-format preprint source
+│   └── preprint.pdf                    ← compiled paper covering both Errata and the base model
 │
 ├── src/
 │   └── errata/                         ← Errata's actual implementation goes here (not started yet)
@@ -101,7 +127,7 @@ errata/
 └── tests/                              ← tests for Errata's own scoring logic
 ```
 
-**Quick rule of thumb:** if you're looking for *the harness* — how Errata scores things, what makes it novel, its own design — go to `docs/` or `src/errata/`. If you're looking for *the agent being evaluated* — its priors, its Bayesian reasoning, its decision policy, or the simulation proving that policy works — go to `base-model/`.
+**Quick rule of thumb:** if you're looking for *the harness* — how Errata scores things, what makes it novel, its own design and its own diagram — go to `docs/` or `assets/errata-flow-diagram.png`. If you're looking for *the agent being evaluated* — its priors, its Bayesian reasoning, its decision policy, its own diagram, or the simulation proving that policy works — go to `base-model/`.
 
 ### Try the dry run (Errata's own scoring logic)
 
@@ -123,6 +149,10 @@ python fraud_triage_simulation.py
 ```
 
 See [base-model/experiments/stage8-fraud-triage-simulation/results/summary.md](base-model/experiments/stage8-fraud-triage-simulation/results/summary.md) for the analysed findings, or the decision record's §11 for the full reasoning behind the test design.
+
+### Read the paper
+
+The full IJCAI-format preprint covering both the base model's Bayesian design / experiment and Errata's own evaluation methodology (including where the two currently do — and don't yet — connect) is in [paper/preprint.pdf](paper/preprint.pdf).
 
 ### Getting started (once Errata's own code lands)
 
